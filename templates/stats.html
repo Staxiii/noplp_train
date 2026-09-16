@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Statistiques — NOPLP Révision{% endblock %}
+{% block content %}
+<h1>Statistiques</h1>
+<p class="subtitle">Vue d'ensemble de tes sessions et des mots les plus souvent ratés.</p>
+
+<div class="stat-cards" id="stat-cards"></div>
+
+<h2>Chansons les plus jouées</h2>
+<div class="panel">
+  <table id="by-song-table">
+    <thead><tr><th>Chanson</th><th>Artiste</th><th>Essais</th><th>Score moyen</th><th>Meilleur score</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="muted" id="by-song-empty"></p>
+</div>
+
+<h2>Mots les plus ratés</h2>
+<div class="panel">
+  <table id="worst-words-table">
+    <thead><tr><th>Mot attendu</th><th>Chanson</th><th>Artiste</th><th>Ratés / vus</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="muted" id="worst-words-empty"></p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='stats.js') }}"></script>
+{% endblock %}

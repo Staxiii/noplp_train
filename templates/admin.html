@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Admin — Paroles{% endblock %}
+{% block content %}
+<h1>Admin — Ajouter / modifier des paroles</h1>
+<p class="subtitle">L'application ne fournit ni ne récupère aucune parole automatiquement : saisis-les ici toi-même (ou utilise <code>import_lyrics.py</code> avec ton propre fichier JSON — voir le README).</p>
+
+<div class="panel">
+  <label for="song-search">Chercher une chanson</label>
+  <input type="search" id="song-search" placeholder="Titre ou artiste...">
+  <ul class="song-list" id="admin-song-list" style="margin-top:10px; max-height: 260px; overflow-y: auto;"></ul>
+</div>
+
+<div class="panel hidden" id="editor-panel">
+  <h2 id="editor-title"></h2>
+  <label for="source-note">Source (note libre, pour toi)</label>
+  <input type="text" id="source-note" placeholder="ex. cahier perso, service sous licence, saisie manuelle...">
+  <div style="margin-top:12px;">
+    <label for="lyrics-text">Paroles (une ligne de couplet par ligne)</label>
+    <textarea id="lyrics-text" rows="16" placeholder="Colle ou saisis ici les paroles, ligne par ligne..."></textarea>
+  </div>
+  <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+    <button id="save-btn">Enregistrer</button>
+    <a class="btn secondary" id="play-link" href="#">Tester l'exercice</a>
+    <span id="save-status" class="muted"></span>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+{% endblock %}

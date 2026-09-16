@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Exercice — NOPLP Révision{% endblock %}
+{% block content %}
+<h1 id="song-title">Chargement...</h1>
+<p class="subtitle" id="song-artist"></p>
+
+<div class="panel" id="setup-panel">
+  <div class="mode-options">
+    <div>
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="coupure">Coupure (comme à la TV)</option>
+        <option value="trous">Trous répartis</option>
+      </select>
+    </div>
+    <div id="trous-options" class="mode-options">
+      <div>
+        <label for="strategy">Stratégie</label>
+        <select id="strategy">
+          <option value="every_n">Tous les N mots</option>
+          <option value="keywords">Mots-clés (longs, non fréquents)</option>
+        </select>
+      </div>
+      <div id="n-wrap">
+        <label for="n">N (1 mot sur N)</label>
+        <input type="number" id="n" value="6" min="2" max="30" style="width: 70px">
+      </div>
+      <div id="minlen-wrap" class="hidden">
+        <label for="min-len">Longueur min.</label>
+        <input type="number" id="min-len" value="5" min="3" max="15" style="width: 70px">
+      </div>
+    </div>
+    <div>
+      <label class="checkbox-label"><input type="checkbox" id="strict-accents"> Accents stricts</label>
+    </div>
+  </div>
+  <button id="start-btn">Commencer l'exercice</button>
+  <p class="error-msg hidden" id="setup-error"></p>
+</div>
+
+<div class="panel hidden" id="exercise-panel">
+  <div class="lyrics-display" id="lyrics-display"></div>
+  <div style="margin-top:16px; display:flex; gap:10px;">
+    <button id="submit-btn">Valider</button>
+    <button class="secondary" id="restart-btn">Recommencer</button>
+  </div>
+</div>
+
+<div class="panel hidden" id="result-panel">
+  <div id="score-banner" class="score-banner"></div>
+  <button class="secondary" id="again-btn">Nouvel essai</button>
+  <a class="btn secondary" href="{{ url_for('index') }}">Retour au répertoire</a>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.SONG_ID = {{ song_id|tojson }};</script>
+<script src="{{ url_for('static', filename='play.js') }}"></script>
+{% endblock %}

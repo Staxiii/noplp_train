@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Chansons — NOPLP Révision{% endblock %}
+{% block content %}
+<h1>Répertoire</h1>
+<p class="subtitle">Choisis une chanson à réviser. Les chansons sans paroles enregistrées doivent d'abord être complétées depuis <a href="{{ url_for('admin') }}">Admin</a>.</p>
+
+<div class="panel">
+  <div class="filters">
+    <div>
+      <label for="q">Recherche (titre ou artiste)</label>
+      <input type="search" id="q" placeholder="ex. Sardou, Connemara...">
+    </div>
+    <div>
+      <label class="checkbox-label"><input type="checkbox" id="with-lyrics"> Paroles disponibles uniquement</label>
+    </div>
+    <div>
+      <label class="checkbox-label"><input type="checkbox" id="meme-only"> Même chanson uniquement</label>
+    </div>
+  </div>
+  <p class="muted" id="count-line"></p>
+  <ul class="song-list" id="song-list"></ul>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='index.js') }}"></script>
+{% endblock %}

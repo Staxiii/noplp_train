@@ -1,0 +1,20 @@
+[
+  {
+    "song_id": "feldman-francois-rien-que-pour-toi",
+    "wiki_target": "Rien que pour toi",
+    "lyrics": "Ceci est un exemple de texte de remplacement.\nIl ne s'agit pas des vraies paroles de la chanson.\nRemplace ces lignes par les paroles reelles, ligne par ligne,\nen respectant les retours a la ligne du couplet original.\nUne fois ce fichier rempli avec le vrai texte, importe-le avec :\npython import_lyrics.py data/mes_paroles.json",
+    "source_note": "Exemple factice -- a remplacer par tes propres paroles (cahier, livre, service sous licence, etc.)"
+  },
+  {
+    "song_id": "ruiz-olivia-la-femme-chocolat",
+    "wiki_target": "La femme chocolat",
+    "lyrics": "Deuxieme exemple de texte factice pour verifier l'import sur plusieurs chansons.\nChaque objet du tableau JSON correspond a une chanson du catalogue.\nLe champ song_id doit correspondre a l'identifiant genere dans data/catalog.json,\nou a defaut wiki_target doit correspondre exactement au titre de la page wiki d'origine.\nSource_note est libre et sert juste a te rappeler d'ou viennent tes paroles.",
+    "source_note": "Exemple factice -- a remplacer par tes propres paroles"
+  },
+  {
+    "song_id": "identifiant-qui-nexiste-pas",
+    "wiki_target": "Chanson introuvable",
+    "lyrics": "Cette entree sert a montrer ce qui se passe quand aucune chanson ne correspond :\nelle apparaitra dans la liste des 'unmatched' affichee par le script, sans rien ecrire en base.",
+    "source_note": "Exemple factice -- demonstration d'une entree non appariee"
+  }
+]

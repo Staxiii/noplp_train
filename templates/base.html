@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}NOPLP Révision{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('index') }}">🎤 NOPLP Révision</a>
+  <nav>
+    <a href="{{ url_for('index') }}">Chansons</a>
+    <a href="{{ url_for('review') }}">Révision des erreurs</a>
+    <a href="{{ url_for('stats_page') }}">Statistiques</a>
+    <a href="{{ url_for('admin') }}">Admin (paroles)</a>
+  </nav>
+</header>
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+<footer class="footer">
+  <p>Projet personnel non affilié à l'émission. Les paroles ne sont jamais fournies par l'application : à ajouter toi-même via <a href="{{ url_for('admin') }}">Admin</a>.</p>
+</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

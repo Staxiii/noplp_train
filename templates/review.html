@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Révision des erreurs — NOPLP Révision{% endblock %}
+{% block content %}
+<h1>Révision des erreurs</h1>
+<p class="subtitle">Une sélection des mots que tu rates le plus souvent, tous morceaux confondus, avec un petit contexte pour chacun.</p>
+
+<div class="panel" id="setup-panel">
+  <div class="mode-options">
+    <div>
+      <label for="limit">Nombre de mots</label>
+      <input type="number" id="limit" value="15" min="3" max="50" style="width: 80px">
+    </div>
+    <div>
+      <label class="checkbox-label"><input type="checkbox" id="strict-accents"> Accents stricts</label>
+    </div>
+  </div>
+  <button id="start-btn">Démarrer la révision</button>
+  <p class="error-msg hidden" id="setup-error"></p>
+</div>
+
+<div class="panel hidden" id="quiz-panel">
+  <div id="items-container"></div>
+  <button id="submit-btn">Valider</button>
+</div>
+
+<div class="panel hidden" id="result-panel">
+  <div id="score-banner" class="score-banner"></div>
+  <button class="secondary" id="again-btn">Nouvelle sélection</button>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='review.js') }}"></script>
+{% endblock %}

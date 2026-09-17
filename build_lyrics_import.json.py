@@ -1,79 +1,167 @@
 import json
+import os
+import re
+import time
+import urllib.parse
+import bs4
+import cloudscraper
 import pandas as pd
 
+# Base URL du Wiki Fandom NOPLP
+BASE_URL = "https://n-oubliez-pas-les-paroles.fandom.com"
 
-def load_and_adapt_catalog(json_path: str) -> pd.DataFrame:
-    """
-    Charge le fichier catalog.json et adapte sa structure aux spécifications
-    du dictionnaire de données Anamusique.
-    """
-    with open(json_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+# Pages d'index listant toutes les chansons avec les slugs exacts
+INDEX_URLS = [
+    "https://n-oubliez-pas-les-paroles.fandom.com/fr/wiki/Liste_des_chansons_existantes_(de_la_lettre_A_%C3%A0_la_lettre_M)",
+    "https://n-oubliez-pas-les-paroles.fandom.com/fr/wiki/Liste_des_chansons_existantes_(de_la_lettre_N_%C3%A0_la_lettre_Z)",
+]
 
-    # 1. Extraction et transformation des entrées
+# Initialisation du scraper anti-Cloudflare
+scraper = cloudscraper.create_scraper(
+    browser={"browser": "chrome", "platform": "windows", "mobile": False}
+)
+
+
+# 1. Extraction de tous les liens de chansons depuis les pages d'index
+def get_all_song_urls() -> list[str]:
+    song_urls = []
+    print("--- Récupération des liens depuis les index ---")
+
+    for index_url in INDEX_URLS:
+        try:
+            res = scraper.get(index_url, timeout=15)
+            res.raise_for_status()
+            soup = bs4.BeautifulSoup(res.content, "html.parser")
+            content = soup.find("div", class_="mw-parser-output")
+
+            if not content:
+                continue
+
+            for a in content.find_all("a", href=True):
+                href = a["href"]
+                # Filtre les liens internes vers les pages de chansons
+                if href.startswith("/fr/wiki/") and ":" not in href:
+                    full_url = urllib.parse.urljoin(BASE_URL, href)
+                    if full_url not in song_urls and not full_url.endswith(
+                        ("Liste_des_chansons_(A-M)", "Liste_des_chansons_(N-Z)")
+                    ):
+                        song_urls.append(full_url)
+        except Exception as e:
+            print(f"Erreur lors du chargement de l'index {index_url}: {e}")
+
+    print(f"Total de chansons trouvées : {len(song_urls)}")
+    return song_urls
+
+
+# 2. Scraper d'une page de chanson individuelle
+def parse_song_page(url: str) -> dict | None:
+    try:
+        res = scraper.get(url, timeout=15)
+        if res.status_code != 200:
+            return None
+
+        soup = bs4.BeautifulSoup(res.content, "html.parser")
+        content = soup.find("div", class_="mw-parser-output")
+        if not content:
+            return None
+
+        track_id = url.split("/")[-1]
+
+        # Titre
+        title_tag = soup.find("h1", id="firstHeading")
+        title = (
+            title_tag.text.strip()
+            if title_tag
+            else track_id.replace("_", " ")
+        )
+
+        # Interprète
+        artist_display = None
+        text_nodes = content.get_text("\n").split("\n")
+        for line in text_nodes:
+            if "Interprète" in line and ":" in line:
+                artist_display = line.split(":", 1)[1].strip()
+                break
+
+        # Paroles
+        paroles_heading = soup.find("span", id="Paroles")
+        lyrics_lines = []
+
+        if paroles_heading:
+            parent_h = paroles_heading.find_parent(["h2", "h3"])
+            if parent_h:
+                for elem in parent_h.find_next_siblings():
+                    if elem.name in ["h2", "h3"]:
+                        break
+                    if elem.name == "p":
+                        text = elem.get_text(strip=True)
+                        if text and not text.startswith("Légende"):
+                            lyrics_lines.append(text)
+
+        lyrics = "\n".join(lyrics_lines) if lyrics_lines else None
+
+        if not lyrics:
+            return None
+
+        return {
+            "id": track_id,
+            "title": title,
+            "artist_display": artist_display or "Artiste Inconnu",
+            "lyrics": lyrics,
+            "language": "fr",
+            "genre": None,
+        }
+
+    except Exception as e:
+        print(f"Erreur sur {url}: {e}")
+        return None
+
+
+# 3. Adaptation au format d'importation
+def build_dataframe(extracted_songs: list[dict]) -> pd.DataFrame:
     records = []
-    for item in data:
-        # Renommage des identifiants et titres
-        track_id = item.get('id')
-        track_name = item.get('title')
-
-        # Concaténation propre des artistes (Main + Featured / Performed By)
-        artist_main = item.get('artist_display') or item.get('artist_raw') or ""
-        featured = item.get('featured_artists')
-        performed_by = item.get('performed_by')
-
-        artists = [artist_main]
-        if featured:
-            artists.append(f"feat. {featured}")
-        if performed_by and performed_by != artist_main:
-            artists.append(f"({performed_by})")
-
-        artist_name = " ".join(filter(None, artists)).strip()
-
-        # Gestion des paroles manquantes (null)
-        lyrics = item.get('lyrics')
-
-        # Champs optionnels ou à compléter par la suite
-        language = item.get('language')  # 'fr' ou 'en'
-        genre = item.get('genre')  # Label cible pour le modèle
-
-        records.append({
-            'track_id': track_id,
-            'track_name': track_name,
-            'artist_name': artist_name,
-            'lyrics': lyrics,
-            'language': language,
-            'genre': genre
-        })
-
-    # 2. Conversion en DataFrame Pandas
-    df = pd.DataFrame(records)
-
-    return df
+    for item in extracted_songs:
+        records.append(
+            {
+                "track_id": item["id"],
+                "track_name": item["title"],
+                "artist_name": item["artist_display"],
+                "lyrics": item["lyrics"],
+                "language": item["language"],
+                "genre": item["genre"],
+            }
+        )
+    return pd.DataFrame(records)
 
 
-def fetch_missing_lyrics(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Fonction stub / placeholder pour compléter les paroles nulles
-    via l'API Genius, Musixmatch ou un fichier CSV/paroles externe.
-    """
-    # Exemple de gestion défensive : isoler les lignes où lyrics est non nul
-    # df_clean = df.dropna(subset=['lyrics'])
-
-    print(f"Total morceaux dans le catalogue: {len(df)}")
-    print(f"Morceaux sans paroles (lyrics == null): {df['lyrics'].isna().sum()}")
-
-    return df
-
-
-# --- Exemple d'utilisation ---
+# --- Exécution principale ---
 if __name__ == "__main__":
-    # Chargement
-    df_catalog = load_and_adapt_catalog("catalog.json")
+    urls = get_all_song_urls()
+    extracted_data = []
 
-    # Vérification du dictionnaire de données
-    print("Aperçu du DataFrame adapté :")
+    print("\n--- Scraping des chansons en cours ---")
+    for i, url in enumerate(urls, 1):
+        print(f"[{i}/{len(urls)}] Scraping: {url.split('/')[-1]}...")
+        song_dict = parse_song_page(url)
+
+        if song_dict:
+            extracted_data.append(song_dict)
+
+        # Pause pour éviter la surcharge
+        time.sleep(0.3)
+
+    # Conversion en DataFrame
+    df_catalog = build_dataframe(extracted_data)
+
+    print("\n--- Aperçu du résultat ---")
     print(df_catalog.head())
+    print(f"\nNombre total de chansons récupérées avec paroles : {len(df_catalog)}")
 
-    # Inspection de la présence des paroles
-    df_catalog = fetch_missing_lyrics(df_catalog)
+    # Sauvegarde
+    os.makedirs("data", exist_ok=True)
+    output_json = "data/lyrics_import.json"
+
+    with open(output_json, "w", encoding="utf-8") as f:
+        json.dump(extracted_data, f, ensure_ascii=False, indent=4)
+
+    print(f"\nFichier sauvegardé avec succès dans : {output_json}")
